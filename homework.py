@@ -62,7 +62,7 @@ def send_message(bot, message):
 
 def get_api_answer(timestamp):
     """Делает запрос к единственному эндпоинту API-сервиса."""
-    params = {'from_date': timestamp}
+    params = {'from_date': 0}
     try:
         homework_statuses = requests.get(
             ENDPOINT, headers=HEADERS, params=params)
@@ -98,12 +98,12 @@ def parse_status(homework):
     """Извлекает информацию о конкретной домашней работе."""
     try:
         homework_name = homework['homework_name']
-        logger.debug('1')
+        logger.debug('Достаем из словаря имя работы')
     except KeyError:
         raise KeyError('В словаре нет ключа homework_name')
     try:
         homework_status = homework['status']
-        logger.debug('2')
+        logger.debug('Достаем статус работы')
     except KeyError:
         raise KeyError('В словаре нет ключа status')
     if homework_status not in HOMEWORK_VERDICTS:
@@ -133,15 +133,15 @@ def main():
     while True:
         try:
             response = get_api_answer(timestamp)
-            logger.debug('Прошло get_api_answer')
+            logger.debug('Исполнение get_api_answer')
             homework = check_response(response)
-            logger.debug('Прошло check_response')
+            logger.debug('Исполнение check_response')
             message = parse_status(homework)
-            logger.debug('Прошло parse_status')
+            logger.debug('Исполнение parse_status')
             if message != message_old:
                 send_message(bot, message)
                 message_old = message
-                logger.debug('Прошло send_message')
+                logger.debug('Исполнение send_message')
             else:
                 message = 'Отсутствие новых статусов'
                 send_message(bot, message)
