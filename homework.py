@@ -20,6 +20,10 @@ TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 RETRY_PERIOD = 600
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
+ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
+# я вынес эндпоинт , но тесты не пропускают без него
+# AssertionError: Не найдена переменная `ENDPOINT`.
+# Не удаляйте и не переименовывайте ее.
 
 
 HOMEWORK_VERDICTS = {
