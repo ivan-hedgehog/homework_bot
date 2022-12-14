@@ -61,7 +61,7 @@ def send_message(bot, message):
 
 def get_api_answer(timestamp):
     """Делает запрос к единственному эндпоинту API-сервиса."""
-    params = {'from_date': timestamp - 20000}
+    params = {'from_date': timestamp}
     try:
         homework_statuses = requests.get(
             endpoint_file.ENDPOINT, headers=HEADERS, params=params)
