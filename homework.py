@@ -1,27 +1,25 @@
 import logging
 import os
-import requests
 import sys
 import time
-import telegram
-import exceptions
+from http import HTTPStatus
+from logging import Formatter, StreamHandler
 
+import requests
+import telegram
 from dotenv import load_dotenv
 
-from logging import StreamHandler, Formatter
-from http import HTTPStatus
+import endpoint_file
+import exceptions
 
 load_dotenv()
 
 PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
-environment_variables = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
 
 RETRY_PERIOD = 600
-ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
-MESSAGE = ''
 
 
 HOMEWORK_VERDICTS = {
@@ -51,6 +49,7 @@ def check_tokens():
 def send_message(bot, message):
     """Отправляет сообщение в Telegram чат."""
     try:
+        logger.debug('Начинаем отправку сообщения в Telegram')
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logger.debug('Сообщение отправлено')
     except telegram.error.TelegramError:
@@ -62,10 +61,10 @@ def send_message(bot, message):
 
 def get_api_answer(timestamp):
     """Делает запрос к единственному эндпоинту API-сервиса."""
-    params = {'from_date': 0}
+    params = {'from_date': timestamp - 20000}
     try:
         homework_statuses = requests.get(
-            ENDPOINT, headers=HEADERS, params=params)
+            endpoint_file.ENDPOINT, headers=HEADERS, params=params)
         response = homework_statuses.json()
         logger.debug(
             'Функция get_api_answer задачу выполнила, замечания отсутствуют'
@@ -85,13 +84,13 @@ def check_response(response):
         raise TypeError('Ответ API-сервера содержит неверный тип данных.')
     if 'homeworks' not in response:
         raise KeyError('Ответ от API не содержит ключ "homeworks".')
+    if 'current_date' not in response:
+        raise KeyError('Ответ от API не содержит ключ "homeworks".')
     homeworks = response['homeworks']
     if not isinstance(homeworks, list):
         raise TypeError('В ответ API-сервера содержит неверный тип данных.')
     logger.debug('Ответ от API-сервера корректен')
-    homeworks = response['homeworks']
-    homework = homeworks[-1]
-    return homework
+    return response['homeworks']
 
 
 def parse_status(homework):
@@ -136,7 +135,7 @@ def main():
             logger.debug('Исполнение get_api_answer')
             homework = check_response(response)
             logger.debug('Исполнение check_response')
-            message = parse_status(homework)
+            message = parse_status(homework[-1])
             logger.debug('Исполнение parse_status')
             if message != message_old:
                 send_message(bot, message)
